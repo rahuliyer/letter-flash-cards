@@ -46,9 +46,9 @@ export function Flashcard({ letter, color, word, onCorrect, onWrong }: Flashcard
 
     if (Math.abs(dx) >= SWIPE_THRESHOLD) {
       if (dx > 0) {
-        onCorrect?.()
-      } else {
         onWrong?.()
+      } else {
+        onCorrect?.()
       }
     } else if (!isDragging.current) {
       handleFlip()
@@ -111,17 +111,17 @@ export function Flashcard({ letter, color, word, onCorrect, onWrong }: Flashcard
       {showHint && isSwipingRight && (
         <div
           className="absolute inset-0 z-10 rounded-3xl flex items-center justify-start pl-6 pointer-events-none"
-          style={{ backgroundColor: `rgba(34,197,94,${swipeRatio * 0.4})` }}
+          style={{ backgroundColor: `rgba(239,68,68,${swipeRatio * 0.4})` }}
         >
-          <span className="text-green-700 font-bold text-2xl">Got it!</span>
+          <span className="text-red-700 font-bold text-2xl">Try again</span>
         </div>
       )}
       {showHint && isSwipingLeft && (
         <div
           className="absolute inset-0 z-10 rounded-3xl flex items-center justify-end pr-6 pointer-events-none"
-          style={{ backgroundColor: `rgba(239,68,68,${swipeRatio * 0.4})` }}
+          style={{ backgroundColor: `rgba(34,197,94,${swipeRatio * 0.4})` }}
         >
-          <span className="text-red-700 font-bold text-2xl">Try again</span>
+          <span className="text-green-700 font-bold text-2xl">Got it!</span>
         </div>
       )}
 
