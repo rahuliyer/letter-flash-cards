@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react"
 import { Flashcard } from "@/components/flashcard"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, Shuffle, RotateCcw } from "lucide-react"
+import { Shuffle, RotateCcw, PartyPopper } from "lucide-react"
 
 const alphabet = [
   { letter: "a", word: "Apple", color: "#FF6B6B" },
@@ -38,31 +38,103 @@ export default function FlashcardsPage() {
   const [cards, setCards] = useState(alphabet)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [cardKey, setCardKey] = useState(0)
+  const [correctCount, setCorrectCount] = useState(0)
+  const [wrongCount, setWrongCount] = useState(0)
+  const [isComplete, setIsComplete] = useState(false)
 
   const currentCard = cards[currentIndex]
+  const remainingCards = cards.length - currentIndex
 
-  const goToNext = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % cards.length)
-    setCardKey((prev) => prev + 1)
-  }, [cards.length])
+  const handleCorrect = useCallback(() => {
+    setCorrectCount((prev) => prev + 1)
+    
+    if (currentIndex >= cards.length - 1) {
+      setIsComplete(true)
+    } else {
+      setCurrentIndex((prev) => prev + 1)
+      setCardKey((prev) => prev + 1)
+    }
+  }, [currentIndex, cards.length])
 
-  const goToPrevious = useCallback(() => {
-    setCurrentIndex((prev) => (prev - 1 + cards.length) % cards.length)
+  const handleWrong = useCallback(() => {
+    setWrongCount((prev) => prev + 1)
+    
+    setCards((prevCards) => {
+      const newCards = [...prevCards]
+      const [wrongCard] = newCards.splice(currentIndex, 1)
+      newCards.push(wrongCard)
+      return newCards
+    })
+    
+    if (currentIndex >= cards.length - 1) {
+      setCurrentIndex(cards.length - 1)
+    }
     setCardKey((prev) => prev + 1)
-  }, [cards.length])
+  }, [currentIndex, cards.length])
 
   const shuffleCards = useCallback(() => {
-    const shuffled = [...cards].sort(() => Math.random() - 0.5)
+    const shuffled = [...alphabet].sort(() => Math.random() - 0.5)
     setCards(shuffled)
     setCurrentIndex(0)
     setCardKey((prev) => prev + 1)
-  }, [cards])
+    setCorrectCount(0)
+    setWrongCount(0)
+    setIsComplete(false)
+  }, [])
 
   const resetCards = useCallback(() => {
     setCards(alphabet)
     setCurrentIndex(0)
     setCardKey((prev) => prev + 1)
+    setCorrectCount(0)
+    setWrongCount(0)
+    setIsComplete(false)
   }, [])
+
+  if (isComplete) {
+    return (
+      <main className="min-h-svh flex flex-col items-center justify-center bg-background p-4">
+        <div className="text-center space-y-6">
+          <PartyPopper className="w-24 h-24 mx-auto text-primary" />
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground">
+            Great Job!
+          </h1>
+          <p className="text-xl text-muted-foreground">
+            You finished all the letters!
+          </p>
+          <div className="flex justify-center gap-8 text-lg">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-600">{correctCount}</div>
+              <div className="text-muted-foreground">Correct</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-red-500">{wrongCount}</div>
+              <div className="text-muted-foreground">Missed</div>
+            </div>
+          </div>
+          <div className="flex gap-4 justify-center pt-4">
+            <Button
+              size="lg"
+              onClick={resetCards}
+              className="h-14 px-8 rounded-full text-lg"
+            >
+              <RotateCcw className="h-5 w-5 mr-2" />
+              Play Again
+            </Button>
+            <Button
+              variant="secondary"
+              size="lg"
+              onClick={shuffleCards}
+              className="h-14 px-8 rounded-full text-lg"
+            >
+              <Shuffle className="h-5 w-5 mr-2" />
+              Shuffle
+            </Button>
+          </div>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <main className="min-h-svh flex flex-col bg-background">
@@ -72,23 +144,29 @@ export default function FlashcardsPage() {
           ABC Flashcards
         </h1>
         <p className="text-muted-foreground mt-1 text-lg">
-          Tap the card to flip it!
+          Tap to flip, swipe to answer
         </p>
       </header>
 
-      {/* Progress indicator */}
+      {/* Progress and stats */}
       <div className="px-4 pb-2">
-        <div className="flex items-center justify-center gap-2">
-          <span className="text-lg font-semibold text-foreground">
-            {currentIndex + 1}
-          </span>
-          <span className="text-muted-foreground">/</span>
-          <span className="text-lg text-muted-foreground">{cards.length}</span>
+        <div className="flex items-center justify-center gap-6">
+          <div className="flex items-center gap-2">
+            <span className="text-green-600 font-bold text-lg">{correctCount}</span>
+            <span className="text-muted-foreground text-sm">correct</span>
+          </div>
+          <div className="text-lg font-semibold text-foreground">
+            {remainingCards} left
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-red-500 font-bold text-lg">{wrongCount}</span>
+            <span className="text-muted-foreground text-sm">missed</span>
+          </div>
         </div>
         <div className="w-full max-w-md mx-auto mt-2 h-2 bg-muted rounded-full overflow-hidden">
           <div
             className="h-full bg-primary rounded-full transition-all duration-300"
-            style={{ width: `${((currentIndex + 1) / cards.length) * 100}%` }}
+            style={{ width: `${(correctCount / 26) * 100}%` }}
           />
         </div>
       </div>
@@ -101,78 +179,36 @@ export default function FlashcardsPage() {
             letter={currentCard.letter}
             color={currentCard.color}
             word={currentCard.word}
+            onCorrect={handleCorrect}
+            onWrong={handleWrong}
           />
         </div>
       </div>
 
-      {/* Navigation controls */}
-      <div className="p-4 space-y-4 pb-8">
-        {/* Main navigation */}
+      {/* Controls */}
+      <div className="p-4 pb-8">
         <div className="flex items-center justify-center gap-4">
           <Button
-            variant="outline"
+            variant="secondary"
             size="lg"
-            onClick={goToPrevious}
-            className="h-14 w-14 rounded-full p-0"
-            aria-label="Previous letter"
+            onClick={shuffleCards}
+            className="h-14 px-6 rounded-full"
+            aria-label="Shuffle cards"
           >
-            <ChevronLeft className="h-8 w-8" />
+            <Shuffle className="h-5 w-5 mr-2" />
+            <span className="text-lg">Shuffle</span>
           </Button>
-
-          <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              size="lg"
-              onClick={shuffleCards}
-              className="h-14 px-6 rounded-full"
-              aria-label="Shuffle cards"
-            >
-              <Shuffle className="h-5 w-5 mr-2" />
-              <span className="text-lg">Shuffle</span>
-            </Button>
-
-            <Button
-              variant="secondary"
-              size="lg"
-              onClick={resetCards}
-              className="h-14 px-6 rounded-full"
-              aria-label="Reset to A-Z"
-            >
-              <RotateCcw className="h-5 w-5 mr-2" />
-              <span className="text-lg">A-Z</span>
-            </Button>
-          </div>
 
           <Button
-            variant="outline"
+            variant="secondary"
             size="lg"
-            onClick={goToNext}
-            className="h-14 w-14 rounded-full p-0"
-            aria-label="Next letter"
+            onClick={resetCards}
+            className="h-14 px-6 rounded-full"
+            aria-label="Reset to A-Z"
           >
-            <ChevronRight className="h-8 w-8" />
+            <RotateCcw className="h-5 w-5 mr-2" />
+            <span className="text-lg">Reset</span>
           </Button>
-        </div>
-
-        {/* Letter quick jump */}
-        <div className="flex flex-wrap justify-center gap-1.5 max-w-md mx-auto">
-          {cards.map((card, index) => (
-            <button
-              key={card.letter}
-              onClick={() => {
-                setCurrentIndex(index)
-                setCardKey((prev) => prev + 1)
-              }}
-              className={`w-9 h-9 rounded-full text-sm font-bold transition-all ${
-                index === currentIndex
-                  ? "bg-primary text-primary-foreground scale-110"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
-              aria-label={`Go to letter ${card.letter}`}
-            >
-              {card.letter}
-            </button>
-          ))}
         </div>
       </div>
     </main>
