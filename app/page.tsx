@@ -5,7 +5,9 @@ import { Flashcard } from "@/components/flashcard"
 import { Button } from "@/components/ui/button"
 import { Shuffle, RotateCcw, PartyPopper } from "lucide-react"
 
-const alphabet = [
+type CardMode = "lowercase" | "uppercase" | "both"
+
+const lowercaseAlphabet = [
   { letter: "a", word: "Apple", color: "#FF6B6B" },
   { letter: "b", word: "Ball", color: "#4ECDC4" },
   { letter: "c", word: "Cat", color: "#FFE66D" },
@@ -34,20 +36,57 @@ const alphabet = [
   { letter: "z", word: "Zebra", color: "#55A3FF" },
 ]
 
+const uppercaseAlphabet = [
+  { letter: "A", word: "Apple", color: "#FF6B6B" },
+  { letter: "B", word: "Ball", color: "#4ECDC4" },
+  { letter: "C", word: "Cat", color: "#FFE66D" },
+  { letter: "D", word: "Dog", color: "#95E1D3" },
+  { letter: "E", word: "Elephant", color: "#F38181" },
+  { letter: "F", word: "Fish", color: "#7FDBDA" },
+  { letter: "G", word: "Grapes", color: "#C9B1FF" },
+  { letter: "H", word: "Hat", color: "#FFEAA7" },
+  { letter: "I", word: "Ice cream", color: "#FD79A8" },
+  { letter: "J", word: "Juice", color: "#74B9FF" },
+  { letter: "K", word: "Kite", color: "#A8E6CF" },
+  { letter: "L", word: "Lion", color: "#FFD93D" },
+  { letter: "M", word: "Moon", color: "#6C5CE7" },
+  { letter: "N", word: "Nest", color: "#81ECEC" },
+  { letter: "O", word: "Orange", color: "#FAB1A0" },
+  { letter: "P", word: "Pig", color: "#FDA7DF" },
+  { letter: "Q", word: "Queen", color: "#B8E994" },
+  { letter: "R", word: "Rainbow", color: "#FF7675" },
+  { letter: "S", word: "Sun", color: "#FDCB6E" },
+  { letter: "T", word: "Tree", color: "#00B894" },
+  { letter: "U", word: "Umbrella", color: "#E17055" },
+  { letter: "V", word: "Van", color: "#00CEC9" },
+  { letter: "W", word: "Whale", color: "#6C5CE7" },
+  { letter: "X", word: "X-ray", color: "#FD79A8" },
+  { letter: "Y", word: "Yo-yo", color: "#FFEAA7" },
+  { letter: "Z", word: "Zebra", color: "#55A3FF" },
+]
+
+function getDeck(mode: CardMode) {
+  if (mode === "lowercase") return lowercaseAlphabet
+  if (mode === "uppercase") return uppercaseAlphabet
+  return [...lowercaseAlphabet, ...uppercaseAlphabet]
+}
+
 export default function FlashcardsPage() {
-  const [cards, setCards] = useState(alphabet)
+  const [mode, setMode] = useState<CardMode>("lowercase")
+  const [cards, setCards] = useState(lowercaseAlphabet)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [cardKey, setCardKey] = useState(0)
   const [correctCount, setCorrectCount] = useState(0)
   const [wrongCount, setWrongCount] = useState(0)
   const [isComplete, setIsComplete] = useState(false)
 
+  const totalCards = getDeck(mode).length
   const currentCard = cards[currentIndex]
   const remainingCards = cards.length - currentIndex
 
   const handleCorrect = useCallback(() => {
     setCorrectCount((prev) => prev + 1)
-    
+
     if (currentIndex >= cards.length - 1) {
       setIsComplete(true)
     } else {
@@ -58,14 +97,14 @@ export default function FlashcardsPage() {
 
   const handleWrong = useCallback(() => {
     setWrongCount((prev) => prev + 1)
-    
+
     setCards((prevCards) => {
       const newCards = [...prevCards]
       const [wrongCard] = newCards.splice(currentIndex, 1)
       newCards.push(wrongCard)
       return newCards
     })
-    
+
     if (currentIndex >= cards.length - 1) {
       setCurrentIndex(cards.length - 1)
     }
@@ -73,8 +112,30 @@ export default function FlashcardsPage() {
   }, [currentIndex, cards.length])
 
   const shuffleCards = useCallback(() => {
-    const shuffled = [...alphabet].sort(() => Math.random() - 0.5)
+    const deck = getDeck(mode)
+    const shuffled = [...deck].sort(() => Math.random() - 0.5)
     setCards(shuffled)
+    setCurrentIndex(0)
+    setCardKey((prev) => prev + 1)
+    setCorrectCount(0)
+    setWrongCount(0)
+    setIsComplete(false)
+  }, [mode])
+
+  const resetCards = useCallback(() => {
+    const deck = getDeck(mode)
+    setCards(deck)
+    setCurrentIndex(0)
+    setCardKey((prev) => prev + 1)
+    setCorrectCount(0)
+    setWrongCount(0)
+    setIsComplete(false)
+  }, [mode])
+
+  const switchMode = useCallback((newMode: CardMode) => {
+    setMode(newMode)
+    const deck = getDeck(newMode)
+    setCards(deck)
     setCurrentIndex(0)
     setCardKey((prev) => prev + 1)
     setCorrectCount(0)
@@ -82,14 +143,7 @@ export default function FlashcardsPage() {
     setIsComplete(false)
   }, [])
 
-  const resetCards = useCallback(() => {
-    setCards(alphabet)
-    setCurrentIndex(0)
-    setCardKey((prev) => prev + 1)
-    setCorrectCount(0)
-    setWrongCount(0)
-    setIsComplete(false)
-  }, [])
+  const modeLabel = mode === "lowercase" ? "Lowercase" : mode === "uppercase" ? "Uppercase" : "Both Cases"
 
   if (isComplete) {
     return (
@@ -148,6 +202,25 @@ export default function FlashcardsPage() {
         </p>
       </header>
 
+      {/* Mode selector */}
+      <div className="px-4 pb-2 flex justify-center">
+        <div className="flex rounded-full border border-border overflow-hidden text-sm font-semibold">
+          {(["lowercase", "uppercase", "both"] as CardMode[]).map((m) => (
+            <button
+              key={m}
+              onClick={() => switchMode(m)}
+              className={`px-4 py-1.5 transition-colors ${
+                mode === m
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {m === "lowercase" ? "abc" : m === "uppercase" ? "ABC" : "abc / ABC"}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Progress and stats */}
       <div className="px-4 pb-2">
         <div className="flex items-center justify-center gap-6">
@@ -166,7 +239,7 @@ export default function FlashcardsPage() {
         <div className="w-full max-w-md mx-auto mt-2 h-2 bg-muted rounded-full overflow-hidden">
           <div
             className="h-full bg-primary rounded-full transition-all duration-300"
-            style={{ width: `${(correctCount / 26) * 100}%` }}
+            style={{ width: `${(correctCount / totalCards) * 100}%` }}
           />
         </div>
       </div>
