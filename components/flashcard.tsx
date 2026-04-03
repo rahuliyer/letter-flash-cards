@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
 
 interface FlashcardProps {
@@ -9,11 +9,12 @@ interface FlashcardProps {
   word: string
   onCorrect?: () => void
   onWrong?: () => void
+  isTouchDevice?: boolean
 }
 
 const SWIPE_THRESHOLD = 60
 
-export function Flashcard({ letter, color, word, onCorrect, onWrong }: FlashcardProps) {
+export function Flashcard({ letter, color, word, onCorrect, onWrong, isTouchDevice }: FlashcardProps) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [dragX, setDragX] = useState(0)
   const startX = useRef<number | null>(null)
@@ -23,6 +24,27 @@ export function Flashcard({ letter, color, word, onCorrect, onWrong }: Flashcard
   const handleFlip = () => {
     setIsFlipped((prev) => !prev)
   }
+
+  // Keyboard controls for non-touch devices
+  useEffect(() => {
+    if (isTouchDevice) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") {
+        e.preventDefault()
+        onCorrect?.()
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault()
+        onWrong?.()
+      } else if (e.key === " ") {
+        e.preventDefault()
+        handleFlip()
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [isTouchDevice, onCorrect, onWrong])
 
   const onDragStart = (clientX: number, clientY: number) => {
     startX.current = clientX
