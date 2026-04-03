@@ -4,6 +4,7 @@ import { useState, useCallback } from "react"
 import { Flashcard } from "@/components/flashcard"
 import { Button } from "@/components/ui/button"
 import { Shuffle, RotateCcw, PartyPopper } from "lucide-react"
+import { useTouchDevice } from "@/hooks/use-touch-device"
 
 type CardMode = "lowercase" | "uppercase" | "both"
 
@@ -72,6 +73,7 @@ function getDeck(mode: CardMode) {
 }
 
 export default function FlashcardsPage() {
+  const isTouchDevice = useTouchDevice()
   const [mode, setMode] = useState<CardMode>("lowercase")
   const [cards, setCards] = useState(lowercaseAlphabet)
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -198,7 +200,9 @@ export default function FlashcardsPage() {
           ABC Flashcards
         </h1>
         <p className="text-muted-foreground mt-1 text-lg">
-          Tap to flip, swipe to answer
+          {isTouchDevice
+            ? "Tap to flip, swipe to answer"
+            : "Space to flip, \u2192 correct, \u2190 wrong"}
         </p>
       </header>
 
@@ -254,6 +258,7 @@ export default function FlashcardsPage() {
             word={currentCard.word}
             onCorrect={handleCorrect}
             onWrong={handleWrong}
+            isTouchDevice={isTouchDevice}
           />
         </div>
       </div>
