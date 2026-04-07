@@ -55,7 +55,9 @@ export function Flashcard({ letter, color, word, onCorrect, onWrong, isTouchDevi
   const onDragMove = (clientX: number) => {
     if (startX.current === null) return
     const dx = clientX - startX.current
-    isDragging.current = Math.abs(dx) > 5
+    if (!isDragging.current && Math.abs(dx) > 10) {
+      isDragging.current = true
+    }
     if (isDragging.current) {
       setDragX(dx)
     }
