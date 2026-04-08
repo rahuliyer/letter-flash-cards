@@ -83,14 +83,16 @@ export function Flashcard({ letter, color, word, onCorrect, onWrong, isTouchDevi
     isDragging.current = false
   }
 
-  // Touch handlers
+  // Touch handlers - preventDefault suppresses emulated mouse events
   const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault()
     onDragStart(e.touches[0].clientX, e.touches[0].clientY)
   }
   const handleTouchMove = (e: React.TouchEvent) => {
     onDragMove(e.touches[0].clientX)
   }
   const handleTouchEnd = (e: React.TouchEvent) => {
+    e.preventDefault()
     onDragEnd(e.changedTouches[0].clientX)
   }
 
