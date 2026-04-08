@@ -55,7 +55,9 @@ export function Flashcard({ letter, color, word, onCorrect, onWrong, isTouchDevi
   const onDragMove = (clientX: number) => {
     if (startX.current === null) return
     const dx = clientX - startX.current
-    isDragging.current = Math.abs(dx) > 5
+    if (!isDragging.current && Math.abs(dx) > 10) {
+      isDragging.current = true
+    }
     if (isDragging.current) {
       setDragX(dx)
     }
@@ -81,14 +83,16 @@ export function Flashcard({ letter, color, word, onCorrect, onWrong, isTouchDevi
     isDragging.current = false
   }
 
-  // Touch handlers
+  // Touch handlers - preventDefault suppresses emulated mouse events
   const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault()
     onDragStart(e.touches[0].clientX, e.touches[0].clientY)
   }
   const handleTouchMove = (e: React.TouchEvent) => {
     onDragMove(e.touches[0].clientX)
   }
   const handleTouchEnd = (e: React.TouchEvent) => {
+    e.preventDefault()
     onDragEnd(e.changedTouches[0].clientX)
   }
 
